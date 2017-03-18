@@ -4,6 +4,7 @@ using System.Linq;
 using System.Web;
 using System.Web.Mvc;
 using Ancestry.Business;
+using Ancestry.Business.Models;
 using Ancestry.Business.Services;
 using Ancestry.Models;
 using PagedList;
@@ -49,7 +50,6 @@ namespace Ancestry.Controllers
         [HttpPost]
         public ActionResult Index(SearchViewModel model, int[] selectedGenders, int? page)
         {
-            
             return PerformSearch(model, selectedGenders, page);
         }
 
@@ -59,23 +59,30 @@ namespace Ancestry.Controllers
             model.GenderList = InitialiseGenders(selectedGenders);
             ModelState.Remove("SelectedGenders");
             if (!ModelState.IsValid)
-            {
-                var error = ModelState.Values
-                    .SelectMany(v => v.Errors);
-                    
-                
                 return View(model);
-            }
 
-            int? genderToSearch = null;
-            
-            if (selectedGenders != null && selectedGenders.Count() == 1)
-                genderToSearch = Convert.ToInt32(selectedGenders[0]);
+            var genderToSearch = DetermineGenderToSearch(selectedGenders);
 
             var pageNumber = page ?? 1;
 
             var searchService = new SearchService();
             var results = searchService.FindPeople(genderToSearch, model.Name);
+
+            model.Results = FormatResultsForDisplay(results, pageNumber, 10);
+            return View(model);
+        }
+
+        private static int? DetermineGenderToSearch(int[] selectedGenders)
+        {
+            int? genderToSearch = null;
+
+            if (selectedGenders != null && selectedGenders.Count() == 1)
+                genderToSearch = Convert.ToInt32(selectedGenders[0]);
+            return genderToSearch;
+        }
+
+        private static IPagedList<Result> FormatResultsForDisplay(List<Person> results, int pageNumber, int pageSize)
+        {
             var displayResults = new List<Result>();
 
             foreach (var result in results)
@@ -83,14 +90,33 @@ namespace Ancestry.Controllers
                 displayResults.Add(new Result(result.Id, result.Name, result.Gender, result.BirthPlace));
             }
 
-            var onePageOfResults = displayResults.ToPagedList<Result>(pageNumber, 10);
-            model.Results = onePageOfResults;
-            return View(model);
+            var onePageOfResults = displayResults.ToPagedList<Result>(pageNumber, pageSize);
+            return onePageOfResults;
         }
 
         public ActionResult Advanced()
         {
-            return View();
+            var model = new SearchViewModel {GenderList = InitialiseGenders(null)};
+            return View(model);
         }
+
+        [HttpPost]
+        public ActionResult Advanced(SearchViewModel model, int[] selectedGenders)
+        {
+            model.GenderList = InitialiseGenders(selectedGenders);
+            ModelState.Remove("SelectedGenders");
+            if (!ModelState.IsValid)
+                return View(model);
+
+            var genderToSearch = DetermineGenderToSearch(selectedGenders);
+            var searchService = new SearchService();
+            var results = searchService.FindPeople(genderToSearch, model.Name);
+
+            model.Results = FormatResultsForDisplay(results, 1, 10); // todo: clean this up for max of 10 records, no paging
+            
+            return View(model);
+        }
+
+       
     }
 }

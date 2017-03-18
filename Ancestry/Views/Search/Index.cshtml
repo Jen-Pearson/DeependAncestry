@@ -17,31 +17,37 @@
             <div class="form-group">
 
                 @Html.TextBoxFor(m => m.Name, new { placeholder = "Name", @class = "form-control" })
-                <br />
+               
                 @Html.ValidationMessageFor(m => m.Name)
 
             </div>
-            <div class="col-sm-6 col-xs-12">
-                <div class="align">
-                    @Html.LabelFor(m => m.GenderList, "Gender:")
-                </div>
-                @foreach (var item in Model.GenderList)
-                {
-                    <div class="checkbox align">
-                        <label>
-                            <input type="checkbox" name="SelectedGenders" value="@item.Value" checked="@item.Selected" />
-                            @item.Text
-                        </label>
+            <div class="col-sm-12 form-group">
+                <div class="row">
+                    <div class="align-first">
+                        @Html.LabelFor(m => m.GenderList, "Gender:")
                     </div>
-                }
+                    @foreach (var item in Model.GenderList)
+                    {
+                        <div class="checkbox align">
+                            <label>
+                                <input type="checkbox" name="SelectedGenders" value="@item.Value" checked="@item.Selected" />
+                                @item.Text
+                            </label>
+                        </div>
+                    }
+                </div>
             </div>
         </div>
         <div class="col-sm-6 col-xs-12">
-            <div>
-                <input type="submit" value="Search" class="btn btn-sm btn-block">
+            <div class="row">
+                <div class="form-group">
+                    <input type="submit" value="Search" class="btn btn-sm btn-block">
+                </div>
             </div>
-            <div class="col-sm-offset-2">
-                @Html.ActionLink("Advanced Search", "Advanced", "Search")
+            <div class="row">
+                <div class=" form-group col-sm-offset-5">
+                    @Html.ActionLink("Advanced Search", "Advanced", "Search")
+                </div>
             </div>
         </div>
 

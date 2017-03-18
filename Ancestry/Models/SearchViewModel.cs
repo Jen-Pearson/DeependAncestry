@@ -26,6 +26,8 @@ namespace Ancestry.Models
         public IPagedList<Result> Results { get; set; }
 
         public int? Page { get; set; }
+
+        public bool UseAncestorDirection { get; set; }
     }
 
     public class Result

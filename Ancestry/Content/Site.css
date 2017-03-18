@@ -16,13 +16,6 @@
     white-space: normal;
 }
 
-/* Set width on the form input elements since they're 100% wide by default */
-input,
-select,
-textarea {
-    max-width: 280px;
-}
-
 .field-validation-error {
     color: #b94a48;
 }
@@ -50,6 +43,12 @@ input[type="checkbox"].input-validation-error {
 
 .validation-summary-valid {
     display: none;
+}
+
+.align-first{
+  display:table-cell;
+    vertical-align: top;
+  width:100px;
 }
 
 .align{

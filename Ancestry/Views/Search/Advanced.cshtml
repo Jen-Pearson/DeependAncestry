@@ -13,24 +13,37 @@
             <div class="form-group">
 
                 @Html.TextBoxFor(m => m.Name, new { placeholder = "Name", @class = "form-control" })
-                <br />
                 @Html.ValidationMessageFor(m => m.Name)
 
             </div>
-            <div class="col-sm-6 col-xs-12">
-                <div class="align">
-                    @Html.LabelFor(m => m.GenderList, "Gender")
-                </div>
-                @foreach (var item in Model.GenderList)
-                {
-                    <div class="checkbox align">
-                        <label>
-                            <input type="checkbox" name="SelectedGenders" value="@item.Value" checked="@item.Selected" />
-                            @item.Text
-                        </label>
+            <div class="col-sm-12 form-group">
+                <div class="row">
+                    <div class="align-first">
+                        @Html.LabelFor(m => m.GenderList, "Gender:")
                     </div>
-                }
+                    @foreach (var item in Model.GenderList)
+                    {
+                        <div class="checkbox align">
+                            <label>
+                                <input type="checkbox" name="SelectedGenders" value="@item.Value" checked="@item.Selected"/>
+                                @item.Text
+                            </label>
+                        </div>
+                    }
+                </div>
+                <div class="row">
+                    <div class="align-first">
+                        @Html.LabelFor(m => m.UseAncestorDirection, "Direction:")
+                    </div>
+                    <div class="align">
+                        @Html.RadioButtonFor(m => m.UseAncestorDirection, "true") Ancestors
+                    </div>
+                    <div class="align">
+                        @Html.RadioButtonFor(m => m.UseAncestorDirection, "false") Descendants
+                    </div>
+                </div>
             </div>
+
         </div>
         <div class="col-sm-6 col-xs-12">
             <div>
