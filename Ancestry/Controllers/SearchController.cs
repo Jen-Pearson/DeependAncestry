@@ -22,7 +22,7 @@ namespace Ancestry.Controllers
                 return View(model);
             }
 
-            var genders = model.SelectedGenders.Split(',').ToList().ConvertAll(c => Convert.ToInt32(c));
+            var genders = model.SelectedGenders== null ? new List<int>() : model.SelectedGenders.Split(',').ToList().ConvertAll(c => Convert.ToInt32(c));
             return PerformSearch(model,genders.ToArray() , model.Page);
         }
 
