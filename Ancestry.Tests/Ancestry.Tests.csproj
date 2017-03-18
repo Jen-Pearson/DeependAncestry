@@ -86,7 +86,6 @@
   <ItemGroup>
     <Compile Include="Controllers\SearchControllerTest.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Services\DataTest.cs" />
     <Compile Include="Services\SearchServiceTest.cs" />
   </ItemGroup>
   <ItemGroup>

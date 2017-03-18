@@ -4,6 +4,7 @@ using System.Globalization;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Ancestry.Business.Common;
 using Ancestry.Business.Models;
 
 namespace Ancestry.Business.Services
@@ -13,8 +14,7 @@ namespace Ancestry.Business.Services
         public List<Person> FindPeople(int? gender, string name)
         {
             DataService service = new DataService();
-            var data = service.ReadFile();
-
+            var data = StaticCache.GetData();
             if (data == null)
                 return null;
             

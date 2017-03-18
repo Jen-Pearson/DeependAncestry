@@ -1,11 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Configuration;
 using System.Linq;
 using System.Web;
 using System.Web.Mvc;
 using System.Web.Optimization;
 using System.Web.Routing;
 using Ancestry.Business;
+using Ancestry.Business.Common;
 
 namespace Ancestry
 {
@@ -23,9 +25,8 @@ namespace Ancestry
 
         private void LoadData()
         {
-            var service = new DataService();
-            var file = Server.MapPath("~/App_Data/data_small.json");
-            HttpContext.Current.Application["data"] = service.ReadFile(file);
+            var file = Server.MapPath(Convert.ToBoolean(ConfigurationManager.AppSettings["UseSmallDataSample"]) ? "~/App_Data/data_small.json" : "~/App_Data/data_large.json");
+            StaticCache.LoadStaticCache(file);
         }
 
     }

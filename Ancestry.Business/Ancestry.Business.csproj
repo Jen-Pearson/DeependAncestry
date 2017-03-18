@@ -45,6 +45,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Common\StaticCache.cs" />
     <Compile Include="Models\Data.cs" />
     <Compile Include="Models\Enums.cs" />
     <Compile Include="Models\Person.cs" />
