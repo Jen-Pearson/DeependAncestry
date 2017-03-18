@@ -1,0 +1,79 @@
+﻿@model Ancestry.Models.SearchViewModel
+
+<h2>
+    Deepend<em>Ancestry</em>
+</h2>
+
+@using (Html.BeginForm("Index", "Search", FormMethod.Post))
+{
+    @Html.AntiForgeryToken()
+
+    <div class="row">
+        <div class="col-sm-6 col-xs-12">
+            <div class="form-group">
+
+                @Html.TextBoxFor(m => m.Name, new { placeholder = "Name", @class = "form-control" })
+                <br />
+                @Html.ValidationMessageFor(m => m.Name)
+
+            </div>
+            <div class="col-sm-6 col-xs-12">
+                <div class="align">
+                    @Html.LabelFor(m => m.GenderList, "Gender")
+                </div>
+                @foreach (var item in Model.GenderList)
+                {
+                    <div class="checkbox align">
+                        <label>
+                            <input type="checkbox" name="SelectedGenders" value="@item.Value" checked="@item.Selected"/>
+                            @item.Text
+                        </label>
+                    </div>
+                }
+            </div>
+        </div>
+        <div class="col-sm-6 col-xs-12">
+            <div>
+                <input type="submit" value="Search" class="btn btn-sm btn-block">
+            </div>
+            <div class="col-sm-offset-2">
+                @Html.ActionLink("Advanced Search", "Advanced", "Search")
+            </div>
+        </div>
+
+    </div>
+
+    if (Model != null && Model.Results != null)
+    {
+        if (Model.Results.Any())
+        {
+            <h3>Results:</h3>
+            <div class="row">
+                <table class="table table-striped table-responsive table-bordered">
+                    <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>NAME</th>
+                        <th>GENDER</th>
+                        <th>BIRTHPLACE</th>
+                    </tr>
+                    @foreach (var result in Model.Results)
+                    {
+                        <tr>
+                            <td>@result.Id.ToString()</td>
+                            <td>@result.FullName</td>
+                            <td>@result.Gender</td>
+                            <td>@result.Birthplace</td>
+                        </tr>
+                    }
+                    <tr></tr>
+                    </thead>
+                </table>
+            </div>
+        }
+        else
+        {
+            <span>No results were found.</span>
+        }
+    }
+}
