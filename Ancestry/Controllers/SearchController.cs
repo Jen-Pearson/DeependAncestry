@@ -13,6 +13,8 @@ namespace Ancestry.Controllers
 {
     public class SearchController : Controller
     {
+        const int MAX_RECORDS_TO_DISPLAY = 10;
+
         [HttpGet]
         public ActionResult Index(SearchViewModel model)
         {
@@ -96,7 +98,12 @@ namespace Ancestry.Controllers
 
         public ActionResult Advanced()
         {
-            var model = new SearchViewModel {GenderList = InitialiseGenders(null)};
+            var model = new SearchViewModel
+            {
+                GenderList = InitialiseGenders(null),
+                UseAncestorDirection = true            
+            };
+           
             return View(model);
         }
 
@@ -110,9 +117,9 @@ namespace Ancestry.Controllers
 
             var genderToSearch = DetermineGenderToSearch(selectedGenders);
             var searchService = new SearchService();
-            var results = searchService.FindPeople(genderToSearch, model.Name);
+            var results = searchService.FindPeopleAndRelations(genderToSearch, model.Name, model.UseAncestorDirection, MAX_RECORDS_TO_DISPLAY);
 
-            model.Results = FormatResultsForDisplay(results, 1, 10); // todo: clean this up for max of 10 records, no paging
+            model.Results = FormatResultsForDisplay(results, 1, MAX_RECORDS_TO_DISPLAY); // todo: clean this up for max of 10 records, no paging
             
             return View(model);
         }
