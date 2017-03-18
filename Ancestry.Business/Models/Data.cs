@@ -9,7 +9,7 @@ namespace Ancestry.Business.Models
     public class Data
     {
         public IList<Place> Places { get; set; }
-        public IList<Person> People { get; set; }
+        public IEnumerable<Person> People { get; set; }
 
     }
 }
