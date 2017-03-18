@@ -1,0 +1,41 @@
+﻿@model Ancestry.Models.SearchViewModel
+@using Ancestry.Models
+@using PagedList.Mvc
+
+
+        @if (Model != null && Model.Results != null)
+        {
+            if (Model.Results.TotalItemCount > 0)
+            {
+                <h3>Results:</h3>
+                <div class="row">
+                    <table class="table table-striped table-responsive table-bordered">
+                        <thead class="thead-default">
+                        <tr>
+                            <th>ID</th>
+                            <th>NAME</th>
+                            <th>GENDER</th>
+                            <th>BIRTHPLACE</th>
+                        </tr>
+                        @foreach (var result in Model.Results)
+                        {
+                            <tr>
+                                <td>@result.Id.ToString()</td>
+                                <td>@result.FullName</td>
+                                <td>@result.Gender</td>
+                                <td>@result.Birthplace</td>
+                            </tr>
+                        }
+                        <tr></tr>
+                        </thead>
+                    </table>
+                </div>
+
+                @Html.PagedListPager(Model.Results, page => Url.Action("Index", new SearchViewModel {Page = page, Name = Model.Name, SelectedGenders = Request.Form["SelectedGenders"] ?? Request.QueryString["SelectedGenders"]}))
+            }
+            else
+            {
+                <span>No results were found.</span>
+            }
+        }
+    

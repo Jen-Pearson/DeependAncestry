@@ -276,6 +276,7 @@
     <Content Include="Views\Shared\_Layout.cshtml" />
     <Content Include="Views\Search\Index.cshtml" />
     <Content Include="Views\Search\Advanced.cshtml" />
+    <Content Include="Views\Search\ResultListing.cshtml" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="Scripts\jquery-3.1.1.slim.min.map" />
