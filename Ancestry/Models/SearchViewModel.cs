@@ -4,6 +4,7 @@ using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Web;
 using System.Web.Mvc;
+using PagedList;
 
 namespace Ancestry.Models
 {
@@ -20,9 +21,11 @@ namespace Ancestry.Models
 
         public IList<SelectListItem> GenderList { get; set; }
 
-        public int SelectedGender { get; set; }
+        public string SelectedGenders { get; set; }
 
-        public List<Result> Results { get; set; }
+        public IPagedList<Result> Results { get; set; }
+
+        public int? Page { get; set; }
     }
 
     public class Result
@@ -48,6 +51,7 @@ namespace Ancestry.Models
 
             Birthplace = birthPlace;
         }
+
     }
 
 }

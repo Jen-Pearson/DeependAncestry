@@ -6,17 +6,29 @@ using System.Web.Mvc;
 using Ancestry.Business;
 using Ancestry.Business.Services;
 using Ancestry.Models;
+using PagedList;
 
 namespace Ancestry.Controllers
 {
     public class SearchController : Controller
     {
-        // GET: Search
-        public ActionResult Index()
+        [HttpGet]
+        public ActionResult Index(SearchViewModel model)
         {
-            var model = new SearchViewModel();
-            model.GenderList = InitialiseGenders(null);
-            return View(model);
+            if (DetermineIfInitialPageLoad(model))
+            {
+                ModelState.Clear();
+                model.GenderList = InitialiseGenders(null);
+                return View(model);
+            }
+
+            var genders = model.SelectedGenders.Split(',').ToList().ConvertAll(c => Convert.ToInt32(c));
+            return PerformSearch(model,genders.ToArray() , model.Page);
+        }
+
+        private static bool DetermineIfInitialPageLoad(SearchViewModel model)
+        {
+            return model.Name == null;
         }
 
         private static List<SelectListItem> InitialiseGenders(int[] selectedGenders)
@@ -35,18 +47,32 @@ namespace Ancestry.Controllers
         }
 
         [HttpPost]
-        public ActionResult Index(SearchViewModel model, int[] selectedGenders)
+        public ActionResult Index(SearchViewModel model, int[] selectedGenders, int? page)
         {
-            model.GenderList = InitialiseGenders(selectedGenders);
+            
+            return PerformSearch(model, selectedGenders, page);
+        }
 
+        private ActionResult PerformSearch(SearchViewModel model, int[] selectedGenders, int? page)
+        {
+
+            model.GenderList = InitialiseGenders(selectedGenders);
+            ModelState.Remove("SelectedGenders");
             if (!ModelState.IsValid)
             {
+                var error = ModelState.Values
+                    .SelectMany(v => v.Errors);
+                    
+                
                 return View(model);
             }
 
             int? genderToSearch = null;
-            if (selectedGenders != null && selectedGenders.Length == 1)
-                genderToSearch = selectedGenders[0];
+            
+            if (selectedGenders != null && selectedGenders.Count() == 1)
+                genderToSearch = Convert.ToInt32(selectedGenders[0]);
+
+            var pageNumber = page ?? 1;
 
             var searchService = new SearchService();
             var results = searchService.FindPeople(genderToSearch, model.Name);
@@ -57,7 +83,8 @@ namespace Ancestry.Controllers
                 displayResults.Add(new Result(result.Id, result.Name, result.Gender, result.BirthPlace));
             }
 
-            model.Results = displayResults;
+            var onePageOfResults = displayResults.ToPagedList<Result>(pageNumber, 10);
+            model.Results = onePageOfResults;
             return View(model);
         }
 

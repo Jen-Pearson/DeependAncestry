@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using System.Web.Mvc;
 using Ancestry.Business;
 using Ancestry.Controllers;
+using Ancestry.Models;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Ancestry.Tests.Controllers
@@ -20,7 +21,7 @@ namespace Ancestry.Tests.Controllers
             SearchController controller = new SearchController();
 
             // Act
-            ViewResult result = controller.Index() as ViewResult;
+            ViewResult result = controller.Index(new SearchViewModel()) as ViewResult;
 
             // Assert
             Assert.IsNotNull(result);
