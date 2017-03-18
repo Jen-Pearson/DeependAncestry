@@ -116,9 +116,26 @@ namespace Ancestry.Business.Services
 
         private List<Person> GetDescendants(Person person, int maxRecordsToDisplay)
         {
-            return new List<Person>();
+            return FindAllChildren(person, new List<Person>(), maxRecordsToDisplay);
         }
 
+        private List<Person> FindAllChildren(Person person, List<Person> descendentList, int maxRecordsToDisplay)
+        {
+            var data = StaticCache.GetData().People.Where(p => p.Mother_Id == person.Id || p.Father_Id == person.Id).Select(p => p).ToList();
+
+            foreach (var child in data)
+            {
+                if (DoesResultListHaveCapacity(descendentList, maxRecordsToDisplay))
+                {
+                    descendentList.Add(child);
+                    FindAllChildren(child, descendentList, maxRecordsToDisplay);
+                }
+                else
+                    return descendentList;
+            }
+
+            return descendentList;
+        }
 
     }
 }
