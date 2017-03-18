@@ -13,7 +13,6 @@ namespace Ancestry.Business.Services
     {
         public List<Person> FindPeople(int? gender, string name)
         {
-            DataService service = new DataService();
             var data = StaticCache.GetData();
             if (data == null)
                 return null;
@@ -36,7 +35,6 @@ namespace Ancestry.Business.Services
 
         public List<Person> FindPeopleAndRelations(int? gender, string name, bool includeAncestors, int maxRecordsToDisplay)
         {
-            DataService service = new DataService();
             var data = StaticCache.GetData();
             if (data == null)
                 return null;
@@ -85,6 +83,9 @@ namespace Ancestry.Business.Services
             if (!person.Mother_Id.HasValue && !person.Father_Id.HasValue)
                 return ancestorList;
 
+            if (ancestorList.Count >= maxRecordsToDisplay)
+                return ancestorList;
+
             if (person.Mother_Id.HasValue)
             {
                 var mother = StaticCache.GetPersonById(person.Mother_Id.Value);
@@ -95,7 +96,7 @@ namespace Ancestry.Business.Services
                 }
             }
 
-            if (person.Father_Id.HasValue)
+            if (person.Father_Id.HasValue && DoesResultListHaveCapacity(ancestorList, maxRecordsToDisplay))
             {
                 var father = StaticCache.GetPersonById(person.Father_Id.Value);
                 if (father != null)
@@ -106,6 +107,11 @@ namespace Ancestry.Business.Services
             }
 
             return ancestorList;
+        }
+
+        private static bool DoesResultListHaveCapacity(List<Person> ancestorList, int maxRecordsToDisplay)
+        {
+            return ancestorList.Count < maxRecordsToDisplay;
         }
 
         private List<Person> GetDescendants(Person person, int maxRecordsToDisplay)
