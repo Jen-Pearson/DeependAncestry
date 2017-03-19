@@ -1,9 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Ancestry.Business.Common;
 using Ancestry.Business.Models;
 
@@ -16,8 +13,8 @@ namespace Ancestry.Business.Services
             var data = StaticCache.GetData();
             if (data == null)
                 return null;
-            
-            var query = data.People.Where(p => p.Name.IndexOf(name, StringComparison.CurrentCultureIgnoreCase) >=0);
+
+            var query = data.People.Where(p => p.Name.IndexOf(name, StringComparison.CurrentCultureIgnoreCase) >= 0);
 
             // get gender enum by int
             if (gender.HasValue)
@@ -30,10 +27,11 @@ namespace Ancestry.Business.Services
             }
 
             return results;
-            
+
         }
 
-        public List<Person> FindPeopleAndRelations(int? gender, string name, bool includeAncestors, int maxRecordsToDisplay)
+        public List<Person> FindPeopleAndRelations(int? gender, string name, bool includeAncestors,
+            int maxRecordsToDisplay)
         {
             var data = StaticCache.GetData();
             if (data == null)
@@ -50,114 +48,156 @@ namespace Ancestry.Business.Services
             switch (includeAncestors)
             {
                 case true:
-                    results = GetAncestors(personOfInterest, maxRecordsToDisplay, gender);
+                    results = BuildUpAncestorList(personOfInterest, maxRecordsToDisplay, gender);
                     break;
                 case false:
-                    results = GetDescendants(personOfInterest, maxRecordsToDisplay, gender);
+                    results = BuildUpDescendantList(personOfInterest, maxRecordsToDisplay, gender);
                     break;
             }
 
             if (results == null)
                 return null;
-            
+
             foreach (var person in results)
-            {                
-                    person.BirthPlace = StaticCache.GetPlaceById(person.Place_Id);
+            {
+                person.BirthPlace = StaticCache.GetPlaceById(person.Place_Id);
             }
 
             return results;
 
         }
 
-        private List<Person> GetAncestors(Person person, int maxRecordsToDisplay, int? genderToDisplay)
+        private static bool DoesResultListHaveCapacity(List<Person> ancestorList, int maxRecordsToDisplay, int? gender)
         {
-            return FindAllParents(person, new List<Person>(), maxRecordsToDisplay, genderToDisplay);
-        }
-
-        private List<Person> FindAllParents(Person person, List<Person> ancestorList, int maxRecordsToDisplay, int? gender)
-        {
-            if (!person.Mother_Id.HasValue && !person.Father_Id.HasValue)
-                return ancestorList;
-
-            if (ancestorList.Count >= maxRecordsToDisplay)
-                return ancestorList;
-
-            var includeFemales = true;
-            var includeMales = true;
+            var relevantItemCount = ancestorList.Count;
 
             if (gender.HasValue)
+                relevantItemCount =
+                    ancestorList.Count(
+                        p => p.Gender.Equals((Enums.Gender)gender.Value == Enums.Gender.Male ? "M" : "F"));
+
+            return relevantItemCount < maxRecordsToDisplay;
+        }
+
+        
+
+        #region GetAncestors
+
+        private List<Person> BuildUpAncestorList(Person person, int maxRecordsToDisplay, int? gender)
+        {
+            List<Person> ancestorList = new List<Person>();
+            List<Person> listToQuery = new List<Person>() { person };
+
+            while (DoesResultListHaveCapacity(ancestorList, maxRecordsToDisplay, gender) && listToQuery.Count > 0)
             {
-                if ((Enums.Gender) gender.Value == Enums.Gender.Female)
-                    includeMales = false;
-                else
-                    includeFemales = false;
+                List<Person> parentList = GetDirectParents(listToQuery);
+
+                foreach (var parent in parentList)
+                {
+                    if (DoesResultListHaveCapacity(ancestorList, maxRecordsToDisplay, gender))
+                        ancestorList.Add(parent);
+                    else
+                        break;
+                }
+
+                listToQuery = parentList;
             }
 
-            if (includeFemales && person.Mother_Id.HasValue)
+            return gender.HasValue
+                ? ancestorList.Where(p => p.Gender.Equals((Enums.Gender)gender.Value == Enums.Gender.Male ? "M" : "F"))
+                    .ToList()
+                : ancestorList;
+        }
+
+        private List<Person> GetDirectParents(List<Person> peopleInTier)
+        {
+            List<Person> parentList = new List<Person>();
+            foreach (var person in peopleInTier)
+            {
+                var directParents = GetDirectParents(person);
+                parentList.AddRange(directParents);
+            }
+
+            return parentList;
+        }
+
+        private List<Person> GetDirectParents(Person person)
+        {
+            var listOfParents = new List<Person>();
+
+            if (!person.Mother_Id.HasValue && !person.Father_Id.HasValue)
+                return listOfParents;
+
+            if (person.Mother_Id.HasValue)
             {
                 var mother = StaticCache.GetPersonById(person.Mother_Id.Value);
                 if (mother != null)
                 {
-                    ancestorList.Add(mother);
-                    FindAllParents(mother, ancestorList, maxRecordsToDisplay, gender);
+                    listOfParents.Add(mother);
                 }
             }
 
-            if (includeMales && person.Father_Id.HasValue && DoesResultListHaveCapacity(ancestorList, maxRecordsToDisplay))
+            if (person.Father_Id.HasValue)
             {
                 var father = StaticCache.GetPersonById(person.Father_Id.Value);
                 if (father != null)
                 {
-                    ancestorList.Add(father);
-                    FindAllParents(father, ancestorList, maxRecordsToDisplay, gender);
+                    listOfParents.Add(father);
                 }
             }
 
-            return ancestorList;
+            return listOfParents;
         }
 
-        private static bool DoesResultListHaveCapacity(List<Person> ancestorList, int maxRecordsToDisplay)
+
+        #endregion
+
+        #region GetDescendants
+
+        private List<Person> BuildUpDescendantList(Person person, int maxRecordsToDisplay, int? gender)
         {
-            return ancestorList.Count < maxRecordsToDisplay;
+            List<Person> descendantList = new List<Person>();
+            List<Person> listToQuery = new List<Person>() { person };
+
+            while (DoesResultListHaveCapacity(descendantList, maxRecordsToDisplay, gender) && listToQuery.Count > 0)
+            {
+                List<Person> childList = GetDirectChildren(listToQuery);
+
+                foreach (var child in childList)
+                {
+                    if (DoesResultListHaveCapacity(descendantList, maxRecordsToDisplay, gender))
+                        descendantList.Add(child);
+                    else
+                        break;
+                }
+
+                listToQuery = childList;
+            }
+
+            return gender.HasValue
+                ? descendantList.Where(p => p.Gender.Equals((Enums.Gender)gender.Value == Enums.Gender.Male ? "M" : "F"))
+                    .ToList()
+                : descendantList;
         }
 
-        private List<Person> GetDescendants(Person person, int maxRecordsToDisplay, int? genderToDisplay)
+        private List<Person> GetDirectChildren(List<Person> peopleInTier)
         {
-            return FindAllChildren(person, new List<Person>(), maxRecordsToDisplay, genderToDisplay);
+            List<Person> childrenList = new List<Person>();
+            foreach (var person in peopleInTier)
+            {
+                var directChildren = GetDirectChildren(person);
+                childrenList.AddRange(directChildren);
+            }
+
+            return childrenList;
         }
 
-        private List<Person> FindAllChildren(Person person, List<Person> descendentList, int maxRecordsToDisplay, int? gender)
+        private List<Person> GetDirectChildren(Person person)
         {
             var query = StaticCache.GetData().People;
-            List<Person> data;
-
-            if (gender.HasValue)
-            {
-                query = query.Where(p => p.Gender.Equals((Enums.Gender) gender.Value == Enums.Gender.Male ? "M" : "F"));
-
-                if ((Enums.Gender) gender.Value == Enums.Gender.Female)
-                    query = query.Where(p => p.Mother_Id == person.Id);
-                else
-                    query = query.Where(p => p.Father_Id == person.Id);
-
-                data = query.Select(p => p).ToList();
-            }
-            else
-                data = query.Where(p => p.Mother_Id == person.Id || p.Father_Id == person.Id).Select(p => p).ToList();
-
-            foreach (var child in data)
-            {
-                if (DoesResultListHaveCapacity(descendentList, maxRecordsToDisplay))
-                {
-                    descendentList.Add(child);
-                    FindAllChildren(child, descendentList, maxRecordsToDisplay, gender);
-                }
-                else
-                    return descendentList;
-            }
-
-            return descendentList;
+            return query.Where(p => p.Mother_Id == person.Id || p.Father_Id == person.Id).Select(p => p).ToList();
         }
 
+        #endregion
     }
 }
