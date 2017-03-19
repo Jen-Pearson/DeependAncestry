@@ -18,3 +18,4 @@
 * PagedList component used for paging was problematic so a quick and dirty approach due to time constraints was used for passing back relevant model data
 * UI Could be cleaned up to better make use of partials.  Result listing was a start on this effort
 * UI could definitely be cleaned up to make it look nicer
+* Route handling would be cleaned up for a real site - but default page will load basic search, with the option to navigate to advanced search page
