@@ -17,8 +17,19 @@ namespace Ancestry.Business.Common
             var service = new DataService();
             records = service.ReadFile(filePath);
 
+            SetLookupDictionaries();
+        }
+
+        private static void SetLookupDictionaries()
+        {
             places = records.Places.ToDictionary(p => p.Id, p => p.Name);
             people = records.People.ToDictionary(p => p.Id, p => p);
+        }
+
+        public static void LoadStaticData(Data data)
+        {
+            records = data;
+            SetLookupDictionaries();
         }
 
         [DataObjectMethod(DataObjectMethodType.Select, true)]
