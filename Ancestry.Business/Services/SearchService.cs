@@ -16,7 +16,6 @@ namespace Ancestry.Business.Services
 
             var query = data.People.Where(p => p.Name.IndexOf(name, StringComparison.CurrentCultureIgnoreCase) >= 0);
 
-            // get gender enum by int
             if (gender.HasValue)
                 query = query.Where(p => p.Gender.Equals((Enums.Gender)gender.Value == Enums.Gender.Male ? "M" : "F"));
 
@@ -27,7 +26,6 @@ namespace Ancestry.Business.Services
             }
 
             return results;
-
         }
 
         public List<Person> FindPeopleAndRelations(int? gender, string name, bool includeAncestors,
@@ -44,16 +42,7 @@ namespace Ancestry.Business.Services
             if (personOfInterest == null)
                 return null;
 
-            List<Person> results = null;
-            switch (includeAncestors)
-            {
-                case true:
-                    results = BuildUpAncestorList(personOfInterest, maxRecordsToDisplay, gender);
-                    break;
-                case false:
-                    results = BuildUpDescendantList(personOfInterest, maxRecordsToDisplay, gender);
-                    break;
-            }
+            var results = BuildUpList(personOfInterest, maxRecordsToDisplay, gender, includeAncestors);
 
             if (results == null)
                 return null;
@@ -79,46 +68,48 @@ namespace Ancestry.Business.Services
             return relevantItemCount < maxRecordsToDisplay;
         }
 
-        
-
-        #region GetAncestors
-
-        private List<Person> BuildUpAncestorList(Person person, int maxRecordsToDisplay, int? gender)
+        private List<Person> BuildUpList(Person person, int maxRecordsToDisplay, int? gender, bool findAncestors)
         {
-            List<Person> ancestorList = new List<Person>();
-            List<Person> listToQuery = new List<Person>() { person };
+            var relationsList = new List<Person>();
+            var listToQuery = new List<Person>() {person};
 
-            while (DoesResultListHaveCapacity(ancestorList, maxRecordsToDisplay, gender) && listToQuery.Count > 0)
+            while (DoesResultListHaveCapacity(relationsList, maxRecordsToDisplay, gender) && listToQuery.Count > 0)
             {
-                List<Person> parentList = GetDirectParents(listToQuery);
+                var directRelationList = GetDirectRelations(peopleInTier: listToQuery, findParents: findAncestors);
 
-                foreach (var parent in parentList)
+                foreach (var relation in directRelationList)
                 {
-                    if (DoesResultListHaveCapacity(ancestorList, maxRecordsToDisplay, gender))
-                        ancestorList.Add(parent);
+                    if (DoesResultListHaveCapacity(relationsList, maxRecordsToDisplay, gender))
+                        relationsList.Add(relation);
                     else
                         break;
                 }
 
-                listToQuery = parentList;
+                listToQuery = directRelationList;
             }
 
             return gender.HasValue
-                ? ancestorList.Where(p => p.Gender.Equals((Enums.Gender)gender.Value == Enums.Gender.Male ? "M" : "F"))
+                ? relationsList.Where(p => p.Gender.Equals((Enums.Gender)gender.Value == Enums.Gender.Male ? "M" : "F"))
                     .ToList()
-                : ancestorList;
+                : relationsList;
         }
 
-        private List<Person> GetDirectParents(List<Person> peopleInTier)
+        private List<Person> GetDirectRelations(List<Person> peopleInTier, bool findParents)
         {
-            List<Person> parentList = new List<Person>();
+            List<Person> relationsList = new List<Person>();
             foreach (var person in peopleInTier)
             {
-                var directParents = GetDirectParents(person);
-                parentList.AddRange(directParents);
+                var directRelations = findParents ? GetDirectParents(person) : GetDirectChildren(person);
+                relationsList.AddRange(directRelations);
             }
 
-            return parentList;
+            return relationsList;
+        }
+
+        private List<Person> GetDirectChildren(Person person)
+        {
+            var query = StaticCache.GetData().People;
+            return query.Where(p => p.Mother_Id == person.Id || p.Father_Id == person.Id).Select(p => p).ToList();
         }
 
         private List<Person> GetDirectParents(Person person)
@@ -148,56 +139,5 @@ namespace Ancestry.Business.Services
 
             return listOfParents;
         }
-
-
-        #endregion
-
-        #region GetDescendants
-
-        private List<Person> BuildUpDescendantList(Person person, int maxRecordsToDisplay, int? gender)
-        {
-            List<Person> descendantList = new List<Person>();
-            List<Person> listToQuery = new List<Person>() { person };
-
-            while (DoesResultListHaveCapacity(descendantList, maxRecordsToDisplay, gender) && listToQuery.Count > 0)
-            {
-                List<Person> childList = GetDirectChildren(listToQuery);
-
-                foreach (var child in childList)
-                {
-                    if (DoesResultListHaveCapacity(descendantList, maxRecordsToDisplay, gender))
-                        descendantList.Add(child);
-                    else
-                        break;
-                }
-
-                listToQuery = childList;
-            }
-
-            return gender.HasValue
-                ? descendantList.Where(p => p.Gender.Equals((Enums.Gender)gender.Value == Enums.Gender.Male ? "M" : "F"))
-                    .ToList()
-                : descendantList;
-        }
-
-        private List<Person> GetDirectChildren(List<Person> peopleInTier)
-        {
-            List<Person> childrenList = new List<Person>();
-            foreach (var person in peopleInTier)
-            {
-                var directChildren = GetDirectChildren(person);
-                childrenList.AddRange(directChildren);
-            }
-
-            return childrenList;
-        }
-
-        private List<Person> GetDirectChildren(Person person)
-        {
-            var query = StaticCache.GetData().People;
-            return query.Where(p => p.Mother_Id == person.Id || p.Father_Id == person.Id).Select(p => p).ToList();
-        }
-
-        #endregion
     }
 }
